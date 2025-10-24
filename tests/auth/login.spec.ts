@@ -89,6 +89,14 @@ test.describe("test-suite 1: Sign-in", () => {
     await page.getByRole("link", { name: "Register" }).click();
     await expect(page).toHaveURL("https://dev.gathernexus.com/signup");
   });
+
+  test("Verify Forgot Password link is working", async ({ page }) => {});
+
+  test("Verify ORBIT LOGO redirected to the dashboard", async ({ page }) => {
+    await page.getByRole("button", { name: "Sign In" }).click();
+    await page.locator(".signup-logo").click();
+    await expect(page).toHaveURL("https://dev.gathernexus.com/");
+  });
 });
 
 test.describe("test-suite 2: Sign-in with valid credentials", () => {
