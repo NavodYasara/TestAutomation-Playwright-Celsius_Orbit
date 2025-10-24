@@ -90,13 +90,26 @@ test.describe("test-suite 1: Sign-in", () => {
     await expect(page).toHaveURL("https://dev.gathernexus.com/signup");
   });
 
-  test("Verify Forgot Password link is working", async ({ page }) => {});
-
   test("Verify ORBIT LOGO redirected to the dashboard", async ({ page }) => {
     await page.getByRole("button", { name: "Sign In" }).click();
     await page.locator(".signup-logo").click();
     await expect(page).toHaveURL("https://dev.gathernexus.com/");
   });
+
+  test("Verify whether the eye icon is working to show/hide password", async ({ page }) => {
+    await page.getByRole("button", { name: "Sign In" }).click();
+    const passwordInput = page.locator('input.gn-input[name="password"][type="password"], input.gn-input[name="password"][type="text"]');
+    await passwordInput.fill("Test@1234");
+    await expect(passwordInput).toHaveAttribute("type", "password");
+    const eyeIcon = page.locator('.password-toggle-icon');
+    await eyeIcon.click();
+    await expect(passwordInput).toHaveAttribute("type", "text");
+    await eyeIcon.click();
+    await expect(passwordInput).toHaveAttribute("type", "password");
+  });
+
+  test("Verify Forgot Password link is working", async ({ page }) => {});
+
 });
 
 test.describe("test-suite 2: Sign-in with valid credentials", () => {
