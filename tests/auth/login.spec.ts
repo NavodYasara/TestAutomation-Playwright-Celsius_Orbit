@@ -90,3 +90,15 @@ test.describe("tet-suite 1 :Sign-in", () => {
     }
   });
 });
+
+test.describe("test-suite 2: Sign-in with valid credentials", () => {
+  test("Verify that user is able to sign in with valid credentials", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Sign In" }).click();
+    await page.locator('input.gn-input[name="email"][type="email"]').click();
+    await page
+      .locator('input.gn-input[name="email"][type="email"]')
+      .fill("alsfdj@gmail.com");
+  });
+});
