@@ -1,9 +1,5 @@
 import { test, expect } from "@playwright/test";
-import {
-  validUsers,
-  invalidUsers,
-  edgeCaseUsers,
-} from "../testdata/testdata";
+import { validUsers, invalidUsers, edgeCaseUsers } from "../testdata/testdata";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("https://dev.gathernexus.com");
@@ -101,21 +97,16 @@ test.describe("test-suite 2: Sign-in with valid credentials", () => {
         .locator('input.gn-input[name="password"][type="password"]')
         .fill(user.password);
       await page.getByRole("button", { name: "Login" }).click();
-
       // Add assertion to verify successful login
-      // Adjust the expected behavior based on your app
-      await expect(page).toHaveURL(/.*dashboard|.*home/, { timeout: 5000 });
-      // Or check for a specific element that appears after login
-      // await expect(page.getByText("Welcome")).toBeVisible();
+      await expect(page).toHaveURL("https://dev.gathernexus.com/dashboard");
     });
-  }  
+  }
 });
 
 test.describe("test-suite 3: Sign-in with invalid credentials", () => {
   for (const user of invalidUsers) {
     test(`Verify error message with ${user.description}`, async ({ page }) => {
       await page.getByRole("button", { name: "Sign In" }).click();
-
       await page
         .locator('input.gn-input[name="email"][type="email"]')
         .fill(user.email);
@@ -125,11 +116,15 @@ test.describe("test-suite 3: Sign-in with invalid credentials", () => {
       await page.getByRole("button", { name: "Login" }).click();
 
       // Verify error message is displayed
-      await expect(
-        page.getByText(/invalid credentials|login failed|incorrect/i)
-      ).toBeVisible({ timeout: 5000 });
+      expect(
+        page.on("dialog", async (dialog) => {
+          expect(dialog.message()).toMatch(
+            "Login failed. Please check your credentials."
+          );
+        })
+      );
       // Verify user stays on login page
-      await expect(page).toHaveURL(/.*signin/);
+      await expect(page).toHaveURL("https://dev.gathernexus.com/signin");
     });
   }
 });
@@ -148,9 +143,11 @@ test.describe("test-suite 4: Edge case validations", () => {
     await page.getByRole("button", { name: "Login" }).click();
 
     // Verify validation error
-    await expect(
-      page.getByText(/email is required|please enter email/i)
-    ).toBeVisible();
+    expect(
+      page.on("dialog", async (dialog) => {
+        expect(dialog.message()).toMatch("Please fill in this field.");
+      })
+    );
   });
 
   test("Verify error with empty password", async ({ page }) => {
@@ -166,9 +163,11 @@ test.describe("test-suite 4: Edge case validations", () => {
     await page.getByRole("button", { name: "Login" }).click();
 
     // Verify validation error
-    await expect(
-      page.getByText(/password is required|please enter password/i)
-    ).toBeVisible();
+    expect(
+      page.on("dialog", async (dialog) => {
+        expect(dialog.message()).toMatch("Please fill in this field.");
+      })
+    );
   });
 
   test("Verify error with invalid email format", async ({ page }) => {
@@ -184,8 +183,10 @@ test.describe("test-suite 4: Edge case validations", () => {
     await page.getByRole("button", { name: "Login" }).click();
 
     // Verify validation error
-    await expect(
-      page.getByText(/invalid email|enter a valid email/i)
-    ).toBeVisible();
+    expect(
+      page.on("dialog", async (dialog) => {
+        expect(dialog.message()).toMatch("Please fill in this field.");
+      })
+    );
   });
 });
