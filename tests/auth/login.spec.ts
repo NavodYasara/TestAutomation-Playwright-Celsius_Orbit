@@ -100,5 +100,12 @@ test.describe("test-suite 2: Sign-in with valid credentials", () => {
     await page
       .locator('input.gn-input[name="email"][type="email"]')
       .fill("alsfdj@gmail.com");
+    await page
+      .locator('input.gn-input[name="password"][type="password"]')
+      .click();
+    await page
+      .locator('input.gn-input[name="password"][type="password"]')
+      .fill("Ales@1234");
+    await page.getByRole("button", { name: "Login" }).click();
   });
 });
