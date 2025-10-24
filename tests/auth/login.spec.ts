@@ -83,6 +83,12 @@ test.describe("test-suite 1: Sign-in", () => {
       );
     }
   });
+
+  test(" Verify Register button is working", async ({ page }) => {
+    await page.getByRole("button", { name: "Sign In" }).click();
+    await page.getByRole("link", { name: "Register" }).click();
+    await expect(page).toHaveURL("https://dev.gathernexus.com/signup");
+  });
 });
 
 test.describe("test-suite 2: Sign-in with valid credentials", () => {
