@@ -1,18 +1,20 @@
 import { test, expect } from "@playwright/test";
+import {
+  validUsers,
+  invalidUsers,
+  edgeCaseUsers,
+} from "../testdata/testdata";
 
 test.beforeEach(async ({ page }) => {
-  // navigate to the base URL before each test
   await page.goto("https://dev.gathernexus.com");
-  // Expect the full URL to match exactly including trailing slash
   await expect(page).toHaveURL("https://dev.gathernexus.com/");
 });
 
-test.describe("tet-suite 1 :Sign-in", () => {
+test.describe("test-suite 1: Sign-in", () => {
   test("Verify that the user is navigated to the correct URL on clicking Sign-in button", async ({
     page,
   }) => {
     await page.getByRole("button", { name: "Sign In" }).click();
-    // Expect the URL to match exactly including trailing slash
     await expect(page).toHaveURL("https://dev.gathernexus.com/signin");
   });
 
@@ -23,9 +25,8 @@ test.describe("tet-suite 1 :Sign-in", () => {
   });
 
   test("Verify Email input is present", async ({ page }) => {
-    // Navigate to the Sign In page where the Email input is expected
     await page.getByRole("button", { name: "Sign In" }).click();
-    // Try multiple selector strategies to be robust against markup differences
+
     const strategies = [
       () => page.getByLabel("Email"),
       () => page.getByPlaceholder("Enter your Email"),
@@ -39,7 +40,6 @@ test.describe("tet-suite 1 :Sign-in", () => {
     for (const getLocator of strategies) {
       try {
         const locator = getLocator();
-        // wait briefly for visibility; don't throw immediately so we can try other strategies
         await expect(locator).toBeVisible({ timeout: 2000 });
         found = true;
         break;
@@ -49,7 +49,6 @@ test.describe("tet-suite 1 :Sign-in", () => {
     }
 
     if (!found) {
-      // Re-throw the last caught error to include Playwright diagnostics in the test output
       throw new Error(
         "Email input not found using any strategy: " +
           (lastError?.message || lastError)
@@ -58,9 +57,8 @@ test.describe("tet-suite 1 :Sign-in", () => {
   });
 
   test("Verify Password input is present", async ({ page }) => {
-    // Navigate to the Sign In page where the Password input is expected
     await page.getByRole("button", { name: "Sign In" }).click();
-    // Try multiple selector strategies to be robust against markup differences
+
     const strategies = [
       () => page.getByPlaceholder("Enter your Password"),
       () => page.getByLabel("Password"),
@@ -68,12 +66,12 @@ test.describe("tet-suite 1 :Sign-in", () => {
       () => page.locator('input[type="password"]'),
       () => page.locator('[name*="password"]'),
     ];
+
     let found = false;
     let lastError: any = null;
     for (const getLocator of strategies) {
       try {
         const locator = getLocator();
-        // wait briefly for visibility; don't throw immediately so we can try other strategies
         await expect(locator).toBeVisible({ timeout: 2000 });
         found = true;
         break;
@@ -81,8 +79,8 @@ test.describe("tet-suite 1 :Sign-in", () => {
         lastError = err;
       }
     }
+
     if (!found) {
-      // Re-throw the last caught error to include Playwright diagnostics in the test output
       throw new Error(
         "Password input not found using any strategy: " +
           (lastError?.message || lastError)
@@ -92,20 +90,102 @@ test.describe("tet-suite 1 :Sign-in", () => {
 });
 
 test.describe("test-suite 2: Sign-in with valid credentials", () => {
-  test("Verify that user is able to sign in with valid credentials", async ({
-    page,
-  }) => {
+  for (const user of validUsers) {
+    test(`Verify login with ${user.description}`, async ({ page }) => {
+      await page.getByRole("button", { name: "Sign In" }).click();
+
+      await page
+        .locator('input.gn-input[name="email"][type="email"]')
+        .fill(user.email);
+      await page
+        .locator('input.gn-input[name="password"][type="password"]')
+        .fill(user.password);
+      await page.getByRole("button", { name: "Login" }).click();
+
+      // Add assertion to verify successful login
+      // Adjust the expected behavior based on your app
+      await expect(page).toHaveURL(/.*dashboard|.*home/, { timeout: 5000 });
+      // Or check for a specific element that appears after login
+      // await expect(page.getByText("Welcome")).toBeVisible();
+    });
+  }  
+});
+
+test.describe("test-suite 3: Sign-in with invalid credentials", () => {
+  for (const user of invalidUsers) {
+    test(`Verify error message with ${user.description}`, async ({ page }) => {
+      await page.getByRole("button", { name: "Sign In" }).click();
+
+      await page
+        .locator('input.gn-input[name="email"][type="email"]')
+        .fill(user.email);
+      await page
+        .locator('input.gn-input[name="password"][type="password"]')
+        .fill(user.password);
+      await page.getByRole("button", { name: "Login" }).click();
+
+      // Verify error message is displayed
+      await expect(
+        page.getByText(/invalid credentials|login failed|incorrect/i)
+      ).toBeVisible({ timeout: 5000 });
+      // Verify user stays on login page
+      await expect(page).toHaveURL(/.*signin/);
+    });
+  }
+});
+
+test.describe("test-suite 4: Edge case validations", () => {
+  test("Verify error with empty email", async ({ page }) => {
+    const testCase = edgeCaseUsers.emptyEmail;
+
     await page.getByRole("button", { name: "Sign In" }).click();
-    await page.locator('input.gn-input[name="email"][type="email"]').click();
     await page
       .locator('input.gn-input[name="email"][type="email"]')
-      .fill("alsfdj@gmail.com");
+      .fill(testCase.email);
     await page
       .locator('input.gn-input[name="password"][type="password"]')
-      .click();
-    await page
-      .locator('input.gn-input[name="password"][type="password"]')
-      .fill("Ales@1234");
+      .fill(testCase.password);
     await page.getByRole("button", { name: "Login" }).click();
+
+    // Verify validation error
+    await expect(
+      page.getByText(/email is required|please enter email/i)
+    ).toBeVisible();
+  });
+
+  test("Verify error with empty password", async ({ page }) => {
+    const testCase = edgeCaseUsers.emptyPassword;
+
+    await page.getByRole("button", { name: "Sign In" }).click();
+    await page
+      .locator('input.gn-input[name="email"][type="email"]')
+      .fill(testCase.email);
+    await page
+      .locator('input.gn-input[name="password"][type="password"]')
+      .fill(testCase.password);
+    await page.getByRole("button", { name: "Login" }).click();
+
+    // Verify validation error
+    await expect(
+      page.getByText(/password is required|please enter password/i)
+    ).toBeVisible();
+  });
+
+  test("Verify error with invalid email format", async ({ page }) => {
+    const testCase = edgeCaseUsers.invalidEmailFormat;
+
+    await page.getByRole("button", { name: "Sign In" }).click();
+    await page
+      .locator('input.gn-input[name="email"][type="email"]')
+      .fill(testCase.email);
+    await page
+      .locator('input.gn-input[name="password"][type="password"]')
+      .fill(testCase.password);
+    await page.getByRole("button", { name: "Login" }).click();
+
+    // Verify validation error
+    await expect(
+      page.getByText(/invalid email|enter a valid email/i)
+    ).toBeVisible();
   });
 });
