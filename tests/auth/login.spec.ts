@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { validUsers, invalidUsers, edgeCaseUsers } from "../testdata/testdata";
+import { validUsers, invalidUsers, edgeCaseUsers } from "../testdata/testdata-login";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("https://dev.gathernexus.com");
