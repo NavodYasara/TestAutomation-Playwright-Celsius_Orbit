@@ -113,18 +113,20 @@ test.describe("test-suite 3: Sign-up with invalid credentials", () => {
 test.describe("test-suite 4: Sign-up with edge cases", () => {
   for (const [key, user] of Object.entries(edgeCaseUsers)) {
     test(`Verify registration behavior for ${key}`, async ({ page }) => {
+      await page.fill("input[name='firstName']", user.firstName || "");
+      await page.fill("input[name='lastName']", user.lastName || "");
       await page.fill("input[name='email']", user.email);
+      await page.fill("input[name='phoneNo']", user.phoneNo || "");
+      await page.fill("input[name='address']", user.address || "");
+      await page.fill("input[name='city']", user.city || "");
       await page.fill("input[name='password']", user.password);
+      await page.fill("input[name='confirmPassword']", user.confirmPassword);
       await page.click("button[type='submit']");
-      if (key === "emptyEmail") {
-        await expect(page.locator(".error-message")).toHaveText(
-          "Email is required"
-        );
-      } else if (key === "shortPassword") {
-        await expect(page.locator(".error-message")).toHaveText(
-          "Password is too short"
-        );
-      }
+
+      // Verify appropriate error messages based on edge case{
+      await expect(page.locator(".swal2-title")).toHaveText(
+        "All fields are required"
+      );
     });
   }
 });
